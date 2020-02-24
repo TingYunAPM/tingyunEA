@@ -7,15 +7,28 @@
 
 #import <Foundation/Foundation.h>
 
-#define NBSOption_Net           1<<0
-#define NBSOption_UI            1<<1
-#define NBSOption_Crash         1<<2
-#define NBSOption_hybrid        1<<3
-#define NBSOption_Socket        1<<4
-#define NBSOption_StrideApp     1<<5
-#define NBSOption_ANR           1<<6
-#define NBSOption_Behaviour     1<<7
-#define NBSOption_CDNHeader     1<<8
+typedef NS_ENUM(NSInteger, NBS_OPTION)
+{
+    NBS_OPTION_NET           = 1<<0,
+    NBS_OPTION_UI            = 1<<1,
+    NBS_OPTION_CRASH         = 1<<2,
+    NBS_OPTION_HYBRID        = 1<<3,
+    NBS_OPTION_SOCKET        = 1<<4,
+    NBS_OPTION_STRIDE        = 1<<5,
+    NBS_OPTION_ANR           = 1<<6,
+    NBS_OPTION_BEHAVIOUR     = 1<<7,
+    NBS_OPTION_CND           = 1<<8,
+    
+    NBSOption_Net       = NBS_OPTION_NET,
+    NBSOption_UI        = NBS_OPTION_UI,
+    NBSOption_Crash     = NBS_OPTION_CRASH,
+    NBSOption_hybrid    = NBS_OPTION_HYBRID,
+    NBSOption_Socket    = NBS_OPTION_SOCKET,
+    NBSOption_StrideApp = NBS_OPTION_STRIDE,
+    NBSOption_ANR       = NBS_OPTION_ANR,
+    NBSOption_Behaviour = NBS_OPTION_BEHAVIOUR,
+    NBSOption_CDNHeader = NBS_OPTION_CND
+};
 
 void nbsCustomerAPI_logStart(NSString *eventName,id self,SEL _cmd);
 void nbsCustomerAPI_logFinish(NSString *eventName,SEL _cmd);
@@ -50,10 +63,11 @@ void nbsCustomerAPI_logFinish(NSString *eventName,SEL _cmd);
 /*
  设置自定义用户属性之前需调用此方法初始化一个user对象。
  province，city可以为nil。
-*/
+ */
 - (instancetype)initWithUserID:(NSString *)userID withUserName:(NSString *)userName withSignUpTime:(NSDate *)signUpTime withProvince:(NSString*)province withCity:(NSString *)city;
 
 @end
+
 
 @interface NBSAppAgent : NSObject
 /*
@@ -76,8 +90,9 @@ void nbsCustomerAPI_logFinish(NSString *eventName,SEL _cmd);
 +(void)startWithAppID:(NSString*)appId location:(BOOL)locationAllowed;
 /*
  同时指定启动概率、是否使用位置服务、渠道ID
+ useBuildVersion：YES优先使用CFBundleVersion版本号，NO使用CFBundleShortVersionString，默认为NO。
  */
-+(void)startWithAppID:(NSString*)appId location:(BOOL)locationAllowed rateOfLaunch:(double) rate channelId:(NSString *)channelId;
++(void)startWithAppID:(NSString*)appId location:(BOOL)locationAllowed rateOfLaunch:(double) rate channelId:(NSString *)channelId useBuildVersion:(BOOL)useBuildVersion;
 
 /*
  忽略某些网络请求。block返回true的，都被忽略。
@@ -90,7 +105,7 @@ void nbsCustomerAPI_logFinish(NSString *eventName,SEL _cmd);
 /*
  设置启动选项，SDK有几个功能，借此可以关闭某个。此函数应该在其他函数之前调用。option的值应该是NBSOption_Net、NBSOption_UI、NBSOption_Crash、NBSOption_hybrid、NBSOption_Socket的组合
  */
-+(void)setSetOption:(int)option;
++(void)setStartOption:(int)option;
 /*
  面包屑功能：是指用户在程序中通过该接口添加的一些信息,当程序发生崩溃时，将会把这些添加的信息，按顺序收集起来，和崩溃信息都发送给服务器
  @breadcrumb:自定义信息
@@ -105,9 +120,9 @@ void nbsCustomerAPI_logFinish(NSString *eventName,SEL _cmd);
 
 /*
  自定义事件：
-  eventID 最多包含32个字符，支持中文、英文、数字、下划线，但不能包含空格或其他的转义字符
-  eventTag 事件标签
-  eventProperties 其它附加属性，字典，超过30个键值对无效，可以为nil。Value值仅支持字符串（String）和数字（Number）类型
+ eventID 最多包含32个字符，支持中文、英文、数字、下划线，但不能包含空格或其他的转义字符
+ eventTag 事件标签
+ eventProperties 其它附加属性，字典，超过30个键值对无效，可以为nil。Value值仅支持字符串（String）和数字（Number）类型
  */
 + (void)trackEvent:(NSString *)eventID withEventTag:(NSString *)eventTag withEventProperties:(NSDictionary *)eventProperties;
 
@@ -116,15 +131,21 @@ void nbsCustomerAPI_logFinish(NSString *eventName,SEL _cmd);
  
  urser: 调用NBSUser初始化方法返回的对象
  userProperties: 用户其它属性，超过30个键值对无效，可以为nil。属性key可包含如下字符：大小写英文字母，下横线，数字，且必须以英文字母开头。最大长度：64。
-    属性值支持以下类型：NSNumber, NSString, NSArray<NSString>，NSString型最大长度255。
-    如：userProperties = {
-    "Age": 23,
-    "Gender": "男",
-    "Hobby": ["音乐", "篮球"]
-    }
-
+ 属性值支持以下类型：NSNumber, NSString, NSArray<NSString>，NSString型最大长度255。
+ 如：userProperties = {
+ "Age": 23,
+ "Gender": "男",
+ "Hobby": ["音乐", "篮球"]
+ }
+ 
  */
 + (void)ty_set_userProfile:(NBSUser *)user withUserProperties:(NSDictionary *)userProperties;
+
+/*
+ 自定义错误：message 长度最大1024字节  metaData的value值支持 NSNumber,NSString,NSArray，NSDictionary类型，最大128k。
+ */
++ (void)reportError:(NSString *)message withMetaData:(NSDictionary *)metaData;
++ (void)reportError:(NSString *)message withException:(NSException *)exception withMetaData:(NSDictionary *)metaData;
 
 /*
  返回一个BOOL值，代表tingyunApp是否启动
@@ -136,7 +157,6 @@ void nbsCustomerAPI_logFinish(NSString *eventName,SEL _cmd);
  SDKVersion为最新的SDK版本
  */
 + (void)closeLogForUpdateHint:(NSString *)SDKVersion;
-
 @end
 
 /*
@@ -158,12 +178,10 @@ void nbsCustomerAPI_logFinish(NSString *eventName,SEL _cmd);
  ];
  
  Example 5:使用选项启动SDK：
- [NBSAppAgent setSetOption:NBSOption_Net|NBSOption_Crash];//只开启网络和崩溃的监控，不开启UI的监控
+ [NBSAppAgent setStartOption:NBSOption_Net|NBSOption_Crash];//只开启网络和崩溃的监控，不开启UI的监控
  [NBSAppAgent startWithAppID:@"xxxxxxx"];
  
  */
-
-
 
 #pragma mark Only for Enterprise-Edition:
 @interface NBSAppAgent (Enterprise)
