@@ -7,27 +7,11 @@
 
 #import <Foundation/Foundation.h>
 
-typedef NS_ENUM(NSInteger, NBS_OPTION)
+typedef NS_ENUM(NSInteger, NBSOPTION)
 {
-    NBS_OPTION_NET           = 1<<0,
-    NBS_OPTION_UI            = 1<<1,
-    NBS_OPTION_CRASH         = 1<<2,
-    NBS_OPTION_HYBRID        = 1<<3,
-    NBS_OPTION_SOCKET        = 1<<4,
-    NBS_OPTION_STRIDE        = 1<<5,
-    NBS_OPTION_ANR           = 1<<6,
-    NBS_OPTION_BEHAVIOUR     = 1<<7,
-    NBS_OPTION_CND           = 1<<8,
-    
-    NBSOption_Net       = NBS_OPTION_NET,
-    NBSOption_UI        = NBS_OPTION_UI,
-    NBSOption_Crash     = NBS_OPTION_CRASH,
-    NBSOption_hybrid    = NBS_OPTION_HYBRID,
-    NBSOption_Socket    = NBS_OPTION_SOCKET,
-    NBSOption_StrideApp = NBS_OPTION_STRIDE,
-    NBSOption_ANR       = NBS_OPTION_ANR,
-    NBSOption_Behaviour = NBS_OPTION_BEHAVIOUR,
-    NBSOption_CDNHeader = NBS_OPTION_CND
+    NBSOption_Net           = 1<<0,
+    NBSOption_UI            = 1<<1,
+    NBSOption_Crash         = 1<<2,
 };
 
 void nbsCustomerAPI_logStart(NSString *eventName,id self,SEL _cmd);
@@ -103,7 +87,11 @@ void nbsCustomerAPI_logFinish(NSString *eventName,SEL _cmd);
  */
 +(void)setCustomerData:(NSString*)data forKey:(NSString*)key;
 /*
- 设置启动选项，SDK有几个功能，借此可以关闭某个。此函数应该在其他函数之前调用。option的值应该是NBSOption_Net、NBSOption_UI、NBSOption_Crash、NBSOption_hybrid、NBSOption_Socket的组合
+ 设置首次启动选项，SDK有几个功能，借此可以关闭某个。此函数应该在其他函数之前调用。
+ SDK首次初始化由于尚未与听云平台交互，默认模块开关仅开启「崩溃模块」，可以通过开启「网络模块」和「UI模块」采集应用首次启动数据。
+ 例如采集崩溃和首次启动数据：
+ [NBSAppAgent setStartOption:NBSOption_Net|NBSOption_Crash|NBSOption_UI]
+ @warning:调用该接口设置启动选项，SDK首次启动不受听云平台开关控制
  */
 +(void)setStartOption:(int)option;
 /*
@@ -141,6 +129,7 @@ void nbsCustomerAPI_logFinish(NSString *eventName,SEL _cmd);
  */
 + (void)ty_set_userProfile:(NBSUser *)user withUserProperties:(NSDictionary *)userProperties;
 
+
 /*
  自定义错误：message 长度最大1024字节  metaData的value值支持 NSNumber,NSString,NSArray，NSDictionary类型，最大128k。
  */
@@ -152,6 +141,10 @@ void nbsCustomerAPI_logFinish(NSString *eventName,SEL _cmd);
  */
 + (BOOL)tingyunAppIsStart;
 
+/*
+ @need 传入yes，会对采集的网络请求参数，response header、response body加密。
+ */
++ (void)encryptionRequired:(BOOL)need;
 /*
  关闭更新提示log。
  SDKVersion为最新的SDK版本
@@ -187,7 +180,6 @@ void nbsCustomerAPI_logFinish(NSString *eventName,SEL _cmd);
 @interface NBSAppAgent (Enterprise)
 +(void)setRedirectURL:(NSString*)URL;//设置转向url
 +(void)setHttpEnabled:(BOOL)isEnable;// 链接dc允许http而非https
-+(void)httpsAllowAnyCert;//https方式链接dc时，允许任何证书，即便是自授的、伪造的
 @end
 
 
